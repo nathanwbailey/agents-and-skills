@@ -12,7 +12,7 @@ Answer specific architecture and implementation questions about code by using th
 When a user asks a specific question about code:
 
 1. **Start from the concrete anchor** — identify the file, symbol, feature, or module the question targets
-2. **Invoke `explorer`** — spawn it with `subagent_type: explorer`, the anchor, and the narrowest useful depth
+2. **Invoke `explorer`** — render `agents/explorer.prompt.tmpl` with `{QUESTION}` = the user's question, `{ANCHOR}` = the concrete anchor, `{DEPTH}` = the narrowest useful depth, `{ANGLE}` = "targeted implementation details", and `{OUTPUT_EXTRA}` = "Focus on key files, call flow, design rationale, and uncertainty tied to the question.", then spawn with `subagent_type: explorer`
 3. **Request focused findings** — ask for key files, call flow, design rationale, and any uncertainty relevant to the question
 4. **Answer directly** — synthesize the subagent findings into a concise explanation tied to the user's question
 

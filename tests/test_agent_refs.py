@@ -76,6 +76,29 @@ class AgentRefs(unittest.TestCase):
         (self.tmp / "skills/how/SKILL.md").write_text("- `model`: grok\n")
         self.assertIn("skills/how/SKILL.md passes model at spawn, overriding the agent pin", lint(self.tmp))
 
+    def test_missing_explorer_template_file_is_reported(self):
+        (self.tmp / "agents/explorer.prompt.tmpl").unlink()
+        self.assertIn("agents/explorer.prompt.tmpl is missing", lint(self.tmp))
+
+    def test_explorer_spawn_without_template_citation_is_reported(self):
+        (self.tmp / "skills/how/SKILL.md").write_text(
+            "Spawn with `subagent_type: explorer` and use {QUESTION} {ANCHOR} {DEPTH} {ANGLE} {OUTPUT_EXTRA}.\n"
+        )
+        self.assertIn(
+            "skills/how/SKILL.md must cite agents/explorer.prompt.tmpl when spawning explorer",
+            lint(self.tmp),
+        )
+
+    def test_explorer_spawn_missing_placeholder_is_reported(self):
+        (self.tmp / "skills/how/SKILL.md").write_text(
+            "Use agents/explorer.prompt.tmpl and spawn `subagent_type: explorer` with "
+            "{QUESTION} {ANCHOR} {DEPTH} {ANGLE}.\n"
+        )
+        self.assertIn(
+            "skills/how/SKILL.md must include explorer placeholders: {OUTPUT_EXTRA}",
+            lint(self.tmp),
+        )
+
     def test_install_writes_only_under_dot_claude(self):
         home = self.tmp / "home"
         home.mkdir()
@@ -83,6 +106,7 @@ class AgentRefs(unittest.TestCase):
         self.assertEqual(sorted(p.name for p in home.iterdir()), [".claude"])
         self.assertEqual(sorted(p.name for p in (home / ".claude").iterdir()), ["agents", "skills"])
         self.assertTrue((home / ".claude/agents/explorer.md").exists())
+        self.assertTrue((home / ".claude/agents/explorer.prompt.tmpl").exists())
         self.assertTrue((home / ".claude/skills/how/SKILL.md").exists())
         self.assertIn("model: claude-sonnet-5", (home / ".claude/agents/explorer.md").read_text())
 

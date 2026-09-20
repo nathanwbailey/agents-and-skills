@@ -10,7 +10,7 @@ Use the `explorer` agent to summarize one provided file at a time. If it is not 
 ## Process
 
 1. Anchor on the file path the user provided.
-2. Spawn `explorer` (`subagent_type: explorer`) with that file as the anchor and allow it to read nearby imports and referenced definitions as needed.
+2. Render `agents/explorer.prompt.tmpl` with `{QUESTION}` = "Summarize this file's purpose and callable surface.", `{ANCHOR}` = the requested file path, `{DEPTH}` = `medium`, `{ANGLE}` = "file summary", and `{OUTPUT_EXTRA}` = the analysis requirements in step 3. Spawn `explorer` (`subagent_type: explorer`) with that rendered prompt and allow it to read nearby imports and referenced definitions as needed.
 3. Ask for:
    - a short file-level summary of contents and purpose
    - every class, function, method, and nested helper in scope

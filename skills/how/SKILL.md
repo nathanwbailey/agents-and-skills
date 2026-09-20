@@ -23,7 +23,7 @@ Decompose the question into 2 to 4 exploration angles, each a distinct slice of 
 
 - `subagent_type`: `explorer`
 
-Each explorer gets the question and its angle. Then go to Step 3.
+For each explorer, render `agents/explorer.prompt.tmpl` with `{QUESTION}` = the user question, `{ANCHOR}` = the scoped subsystem anchor for that angle, `{DEPTH}` = `medium` (unless the user requested another depth), `{ANGLE}` = that explorer's angle, and `{OUTPUT_EXTRA}` = "Return findings, inferences, search gaps, and files read.". Spawn with the rendered prompt. Then go to Step 3.
 
 ## Step 2b. Direct Explain (simple questions)
 
