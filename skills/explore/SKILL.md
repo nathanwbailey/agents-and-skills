@@ -12,7 +12,7 @@ The child agent may search and read files but must leave the workspace unchanged
 ## Process
 
 1. **Parent — scope:** State the question, concrete anchor, and depth. Use medium depth unless the caller requests another level.
-2. **Parent — delegate:** Spawn the project-scoped `explorer` agent for the bounded investigation before exploring locally. It is configured in `.codex/agents/explorer.toml` with a read-only tool surface and the child handoff contract below. If delegation is unavailable, report that the exploration cannot follow this skill and stop.
+2. **Parent — delegate:** Spawn the `explorer` agent (`subagent_type: explorer`, defined in `agents/explorer.md`) for the bounded investigation before exploring locally. Build its prompt from `explorer.prompt.tmpl` (beside the agent: `agents/` in this repo, `~/.claude/agents/` once installed). The agent has a read-only tool surface and returns the child handoff below. If delegation is unavailable, report that the exploration cannot follow this skill and stop.
 3. **Child — investigate:** The `explorer` agent locates the anchor and applicable repository instructions, resolves ambiguous or duplicate anchors, then follows definitions, callers, callees, tests, and configuration only where they affect the question. It checks competing implementations when ownership is unclear.
 4. **Child — report:** Return the child handoff defined below.
 5. **Parent — verify and integrate:** Incorporate the child's evidence, perform any necessary local follow-up, and ensure every material claim meets the same evidence standard.
@@ -35,6 +35,7 @@ The child returns:
 1. **Findings** — observed behavior with a precise `path:line` reference for every material claim.
 2. **Inferences** — conclusions not directly established by the cited code, labeled as inference.
 3. **Search gaps** — unresolved questions, what was searched, and why the evidence was insufficient.
+4. **Files read** — every file the child read.
 
 ### Parent response to caller
 
