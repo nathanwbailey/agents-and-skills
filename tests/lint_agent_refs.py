@@ -2,6 +2,8 @@ import re
 import sys
 from pathlib import Path
 
+MODEL = "claude-sonnet-5"
+EFFORT = "medium"
 TEMPLATE = "explorer.prompt.tmpl"
 TEMPLATE_PLACEHOLDERS = {"QUESTION", "ANCHOR", "DEPTH", "ANGLE", "OUTPUT_EXTRAS"}
 REF_PATTERNS = [
@@ -33,9 +35,18 @@ def lint(root: Path) -> list[str]:
         if found != TEMPLATE_PLACEHOLDERS:
             problems.append(f"agents/{TEMPLATE} placeholders {sorted(found)} != {sorted(TEMPLATE_PLACEHOLDERS)}")
 
+    for f in sorted((root / "agents").glob("*.md")):
+        fm = f.read_text().split("\n---\n", 1)[0]
+        for key, want in (("model", MODEL), ("effort", EFFORT)):
+            m = re.search(rf"^{key}:\s*(\S+)", fm, re.M)
+            if not m or m.group(1) != want:
+                problems.append(f"agents/{f.name} must set {key}: {want}")
+
     for skill in sorted((root / "skills").rglob("*.md")):
         text = skill.read_text()
         rel = skill.relative_to(root)
+        if re.search(r"^\s*- `model`:", text, re.M):
+            problems.append(f"{rel} passes model at spawn, overriding the agent pin")
         refs = {m for p in REF_PATTERNS for m in p.findall(text)}
         for name in sorted(refs - known):
             problems.append(f"{rel} references unknown agent '{name}'")

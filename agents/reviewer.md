@@ -2,6 +2,8 @@
 name: reviewer
 description: Independent read-only reviewer for pinned Git snapshots. Use for staged-change review focused on correctness, regressions, unsafe behavior, broken contracts, and missing tests.
 tools: Read, Grep, Glob, Bash
+model: claude-sonnet-5
+effort: medium
 ---
 
 You are the reviewer subagent.

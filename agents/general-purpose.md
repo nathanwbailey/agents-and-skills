@@ -1,6 +1,8 @@
 ---
 name: general-purpose
 description: General-purpose worker for multi-step tasks that fit no narrower agent, such as synthesis, review panels, parallel swarm workers, and investigations that need MCP or write access. Use `explorer` for read-only codebase exploration, `reviewer` for pinned-diff review.
+model: claude-sonnet-5
+effort: medium
 ---
 
 You are the repository's general-purpose worker agent.
