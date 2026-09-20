@@ -6,6 +6,7 @@ import unittest
 from pathlib import Path
 
 from lint_agent_refs import lint
+from lint_banned_terms import banned_terms
 
 REPO = Path(__file__).resolve().parent.parent
 
@@ -20,6 +21,19 @@ class AgentRefs(unittest.TestCase):
     def test_repo_is_clean(self):
         self.assertEqual(lint(REPO), [])
 
+    def test_repo_has_no_cursor_cloud_or_model_config_references(self):
+        self.assertEqual(banned_terms(REPO), [])
+
+    def test_banned_terms_are_reported_with_file_and_line(self):
+        (self.tmp / "skills/how/SKILL.md").write_text("ok\nspawn on grok-4.6-fast-xhigh\n")
+        self.assertIn("skills/how/SKILL.md:2 mentions 'grok'", banned_terms(self.tmp))
+
+    def test_precursor_and_pagination_cursor_are_not_reported(self):
+        clean = self.tmp / "clean"
+        clean.mkdir()
+        (clean / "note.md").write_text("a precursor to the change, origin of the bug\n")
+        self.assertEqual(banned_terms(clean), [])
+
     def test_unknown_agent_is_reported(self):
         (self.tmp / "skills/how/SKILL.md").write_text("subagent_type: ghost\n")
         self.assertIn("skills/how/SKILL.md references unknown agent 'ghost'", lint(self.tmp))
@@ -31,22 +45,6 @@ class AgentRefs(unittest.TestCase):
     def test_display_name_of_comment_sicko_is_reported(self):
         (self.tmp / "skills/no-comments/SKILL.md").write_text('subagent_type: "Comment"\n')
         self.assertIn("skills/no-comments/SKILL.md references unknown agent 'Comment'", lint(self.tmp))
-
-    def test_explorer_without_template_is_reported(self):
-        (self.tmp / "skills/summarize/SKILL.md").write_text("subagent_type: explorer\n")
-        self.assertIn("skills/summarize/SKILL.md spawns explorer without citing explorer.prompt.tmpl", lint(self.tmp))
-
-    def test_missing_template_is_reported(self):
-        (self.tmp / "agents/explorer.prompt.tmpl").unlink()
-        self.assertIn("agents/explorer.prompt.tmpl is missing", lint(self.tmp))
-
-    def test_template_placeholder_drift_is_reported(self):
-        t = self.tmp / "agents/explorer.prompt.tmpl"
-        t.write_text(t.read_text().replace("{DEPTH}", "{LEVEL}"))
-        self.assertEqual(
-            lint(self.tmp),
-            ["agents/explorer.prompt.tmpl placeholders ['ANCHOR', 'ANGLE', 'LEVEL', 'OUTPUT_EXTRAS', 'QUESTION'] != ['ANCHOR', 'ANGLE', 'DEPTH', 'OUTPUT_EXTRAS', 'QUESTION']"],
-        )
 
     def test_generalpurpose_camelcase_is_reported(self):
         (self.tmp / "skills/why/SKILL.md").write_text("subagent_type: generalPurpose\n")
@@ -63,10 +61,6 @@ class AgentRefs(unittest.TestCase):
     def test_backticked_subagent_type_form_is_checked(self):
         (self.tmp / "skills/how/SKILL.md").write_text("- `subagent_type`: `ghost`\n")
         self.assertIn("skills/how/SKILL.md references unknown agent 'ghost'", lint(self.tmp))
-
-    def test_how_explorer_without_template_is_reported(self):
-        (self.tmp / "skills/how/SKILL.md").write_text("- `subagent_type`: `explorer`\n")
-        self.assertIn("skills/how/SKILL.md spawns explorer without citing explorer.prompt.tmpl", lint(self.tmp))
 
     def test_agent_without_model_pin_is_reported(self):
         f = self.tmp / "agents/reviewer.md"
@@ -88,7 +82,7 @@ class AgentRefs(unittest.TestCase):
         subprocess.run([str(REPO / "install.sh")], env={**os.environ, "HOME": str(home)}, check=True, capture_output=True)
         self.assertEqual(sorted(p.name for p in home.iterdir()), [".claude"])
         self.assertEqual(sorted(p.name for p in (home / ".claude").iterdir()), ["agents", "skills"])
-        self.assertTrue((home / ".claude/agents/explorer.prompt.tmpl").exists())
+        self.assertTrue((home / ".claude/agents/explorer.md").exists())
         self.assertTrue((home / ".claude/skills/how/SKILL.md").exists())
         self.assertIn("model: claude-sonnet-5", (home / ".claude/agents/explorer.md").read_text())
 
@@ -101,10 +95,6 @@ class AgentRefs(unittest.TestCase):
         self.assertEqual((home / ".claude/agents/explorer.md").read_text(), "mine")
         run("--force")
         self.assertIn("effort: medium", (home / ".claude/agents/explorer.md").read_text())
-
-    def test_template_is_not_loadable_as_an_agent(self):
-        self.assertFalse(list((REPO / "agents").glob("explorer.prompt.*.md")))
-        self.assertTrue((REPO / "agents/explorer.prompt.tmpl").exists())
 
 
 if __name__ == "__main__":

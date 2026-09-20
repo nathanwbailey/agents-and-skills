@@ -4,8 +4,7 @@ Personal collection of Claude Code skills and subagents.
 
 - `skills/` — one directory per skill, each with a `SKILL.md`
 - `agents/` — Claude Code subagent definitions. Every agent pins `model: claude-sonnet-5` and `effort: medium`
-- `agents/explorer.prompt.tmpl` — the prompt template for the `explorer` agent. Skills that spawn `explorer` fill it in. It uses `.tmpl` so Claude Code does not load it as an agent, and it installs beside `explorer.md`
-- `tests/` — `python3 -m unittest discover tests` checks that every agent a skill spawns exists in `agents/`, that every agent pins the model and effort, and that `install.sh` installs into `~/.claude`
+- `tests/` — `python3 -m unittest discover tests` checks that every agent a skill spawns exists in `agents/`, that every agent pins the model and effort, that no file names another editor, a remote agent, or a non-Claude model, and that `install.sh` installs into `~/.claude`
 - `install.sh` — copies `skills/` to `~/.claude/skills` and `agents/` to `~/.claude/agents`
 
 ## Install

@@ -23,7 +23,7 @@ Decompose the question into 2 to 4 exploration angles, each a distinct slice of 
 
 - `subagent_type`: `explorer`
 
-Each explorer gets the prompt from `explorer.prompt.tmpl` (beside the agent: `agents/` in this repo, `~/.claude/agents/` once installed) with its angle filled in. Then go to Step 3.
+Each explorer gets the question and its angle. Then go to Step 3.
 
 ## Step 2b. Direct Explain (simple questions)
 

@@ -4,7 +4,7 @@ import process from "node:process";
 
 const RULE =
 	"Tests alone are not sufficient verification. A PR is verified only when its unit, live, and perf boxes are all checked.";
-const LANES = "Ten lanes on `grok-4.6-fast-xhigh` at the PR head";
+const LANES = "Ten lanes at the PR head";
 const SUB_BLOCKS = [
 	"Depends on.",
 	"Files.",
@@ -17,7 +17,7 @@ const SUB_BLOCKS = [
 	"Merge.",
 ];
 const PROGRAM_H3 = ["Arm the program", "Spawn owners", "PR mechanics", "Verdict and merge", "Boot recipe"];
-const PROGRAM_MARKERS = ["/goal", "git show origin/main:", /30[- ]minute/, "status message"];
+const PROGRAM_MARKERS = ["/goal", "git show ", /30[- ]minute/, "status message"];
 const HOW_TO_READ_MARKERS = [
 	"One box is one unit of work",
 	"names the evidence",
@@ -87,11 +87,11 @@ const program = find("Program checklist");
 if (!program) fail(1, 'no "## Program checklist" section');
 else {
 	const h3s = program.body.filter((l) => !l.code && l.text.startsWith("### ")).map((l) => l.text.slice(4).trim());
-	let cursor = 0;
+	let next = 0;
 	for (const name of PROGRAM_H3) {
-		const at = h3s.findIndex((t, i) => i >= cursor && t.startsWith(name));
+		const at = h3s.findIndex((t, i) => i >= next && t.startsWith(name));
 		if (at === -1) fail(program.n, `Program checklist lacks "### ${name}" in order`);
-		else cursor = at + 1;
+		else next = at + 1;
 	}
 	for (const marker of PROGRAM_MARKERS) {
 		const ok = marker instanceof RegExp ? marker.test(bodyText(program)) : bodyText(program).includes(marker);

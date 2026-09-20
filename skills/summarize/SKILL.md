@@ -10,7 +10,7 @@ Use the `explorer` agent to summarize one provided file at a time. If it is not 
 ## Process
 
 1. Anchor on the file path the user provided.
-2. Spawn `explorer` (`subagent_type: explorer`) with a prompt built from `explorer.prompt.tmpl` (beside the agent: `agents/` in this repo, `~/.claude/agents/` once installed), that file as the anchor, and allow it to read nearby imports and referenced definitions as needed.
+2. Spawn `explorer` (`subagent_type: explorer`) with that file as the anchor and allow it to read nearby imports and referenced definitions as needed.
 3. Ask for:
    - a short file-level summary of contents and purpose
    - every class, function, method, and nested helper in scope

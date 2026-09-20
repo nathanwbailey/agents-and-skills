@@ -22,9 +22,10 @@ prs=$(mktemp)
 gh pr list --author "@me" --state all --limit 1000 \
 	--json number,state,headRefName 2>/dev/null > "$prs" || echo "[]" > "$prs"
 
-# Transcripts dir: ~/.cursor/projects/<slugified-repo-path>/agent-transcripts.
-slug=$(printf '%s' "$main_wt" | sed 's#^/##; s#/#-#g')
-transcripts="$HOME/.cursor/projects/$slug/agent-transcripts"
+# Transcripts dir: ~/.claude/projects/<slug>, one <uuid>.jsonl per chat. The slug is
+# the workspace path with every non-alphanumeric character turned into '-'.
+slug=$(printf '%s' "$main_wt" | sed 's#[^A-Za-z0-9]#-#g')
+transcripts="$HOME/.claude/projects/$slug"
 now=$(date +%s)
 
 printf "SIZE\tAGE\tMERGED\tDIRTY\tREMOTE\tPR\tLAST_CHAT\tBUCKET\tWORKTREE\n"

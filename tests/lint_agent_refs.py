@@ -4,8 +4,6 @@ from pathlib import Path
 
 MODEL = "claude-sonnet-5"
 EFFORT = "medium"
-TEMPLATE = "explorer.prompt.tmpl"
-TEMPLATE_PLACEHOLDERS = {"QUESTION", "ANCHOR", "DEPTH", "ANGLE", "OUTPUT_EXTRAS"}
 REF_PATTERNS = [
     re.compile(r"subagent_type`?[:=]\s*[`\"']?([A-Za-z][\w-]*)"),
     re.compile(r"agentName=([A-Za-z][\w-]*)"),
@@ -27,14 +25,6 @@ def lint(root: Path) -> list[str]:
     known = agent_names(root)
     problems = []
 
-    template = root / "agents" / TEMPLATE
-    if not template.exists():
-        problems.append(f"agents/{TEMPLATE} is missing")
-    else:
-        found = set(re.findall(r"\{([A-Z_]+)\}", template.read_text()))
-        if found != TEMPLATE_PLACEHOLDERS:
-            problems.append(f"agents/{TEMPLATE} placeholders {sorted(found)} != {sorted(TEMPLATE_PLACEHOLDERS)}")
-
     for f in sorted((root / "agents").glob("*.md")):
         fm = f.read_text().split("\n---\n", 1)[0]
         for key, want in (("model", MODEL), ("effort", EFFORT)):
@@ -50,8 +40,6 @@ def lint(root: Path) -> list[str]:
         refs = {m for p in REF_PATTERNS for m in p.findall(text)}
         for name in sorted(refs - known):
             problems.append(f"{rel} references unknown agent '{name}'")
-        if "explorer" in refs and TEMPLATE not in text:
-            problems.append(f"{rel} spawns explorer without citing {TEMPLATE}")
     return problems
 
 

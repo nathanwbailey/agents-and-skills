@@ -54,4 +54,4 @@ Finish with one coherent report covering completed tasks, material decisions, va
 
 ## Boundaries
 
-This skill emulates asynchronous decomposition and scheduling. It does not provide Cursor's worktree isolation, Agents Window UI, or multi-root workspace feature. When safe edit ownership cannot be partitioned, parallelize investigation and review, then perform implementation serially.
+This skill emulates asynchronous decomposition and scheduling. It does not provide worktree isolation or a multi-root workspace. When safe edit ownership cannot be partitioned, parallelize investigation and review, then perform implementation serially.
