@@ -27,18 +27,18 @@ Give each subagent:
 
 Each editor preserves pre-existing changes in its owned files and reports them separately. Its writes, staging, reverts, formatting, and other mutations stay inside its ownership. Worker validation is limited to owned paths and read-only checks; the root agent runs repository-wide mutating formatters and full validation after integration.
 
-Use `list_agents` to account for occupied slots. Fill the available slots with ready tasks without waiting between spawns. The root agent should take an independent task when that helps throughput; otherwise it coordinates and integrates.
+Use `ListAgents` to account for running agents. Fill the available slots with ready tasks without waiting between spawns. The root agent should take an independent task when that helps throughput; otherwise it coordinates and integrates.
 
 This step is complete when every running agent has non-overlapping ownership and a checkable completion criterion.
 
 ## 3. Run the asynchronous queue
 
-Use `spawn_agent` for the first wave. While agents run, progress root-owned work and send concise user updates. Treat new additive user messages as queue entries. Before scheduling one, update the dependency graph and ownership map; work touching a path owned by a running agent remains blocked until that owner finishes or is explicitly redirected. When a new message replaces earlier work, interrupt or redirect only the affected agents.
+Use the Agent tool for the first wave, launching each with `run_in_background: true`; they report back automatically when done. While agents run, progress root-owned work and send concise user updates. Treat new additive user messages as queue entries. Before scheduling one, update the dependency graph and ownership map; work touching a path owned by a running agent remains blocked until that owner finishes or is explicitly redirected. When a new message replaces earlier work, interrupt or redirect only the affected agents.
 
 As each agent finishes:
 
 1. Inspect its result and shared-workspace changes.
-2. Send a focused follow-up when its deliverable is incomplete.
+2. Send a focused follow-up with `SendMessage` when its deliverable is incomplete.
 3. Start the next ready task in the freed slot.
 4. Route discovered work to the smallest relevant owner instead of widening every agent's scope.
 

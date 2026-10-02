@@ -1,48 +1,38 @@
 ---
 name: explore
-description: Explore a codebase read-only and return an evidence-backed map. Use when the user explicitly asks to explore or trace code, or when another skill needs verified structure, ownership, or flow evidence.
+description: Explore a codebase and return an evidence-backed map. Reuse summaries for source files outside documentation. Use when asked to trace code or gather context for a repository file.
 ---
 
 # Explore
 
-Investigate from a concrete anchor and stop at the narrowest boundary that answers the question. The caller's requested output contract takes precedence over this skill's default.
+Investigate from a concrete anchor and stop at the narrowest boundary that answers the question. Read Markdown and documentation files directly. For another named repository file, check its mirrored summary before searching its contents. The caller's requested response format takes precedence over the default below.
 
-The child agent may search and read files but must leave the workspace unchanged. Ask it to return evidence, inferences, and unresolved questions rather than edits or recommendations outside the requested scope.
+## File summary workflow
 
-## Process
+Do not create summaries for Markdown (`.md`, `.mdx`, `.markdown`), other documentation files (`.rst`, `.adoc`), or any file under `doc/`, `docs/`, or `documentation/`. Read these sources directly.
 
-1. **Parent — scope:** State the question, concrete anchor, and depth. Use medium depth unless the caller requests another level.
-2. **Parent — delegate:** Render `agents/explorer.prompt.tmpl` with `{QUESTION}` = the bounded investigation question, `{ANCHOR}` = the concrete anchor, `{DEPTH}` = requested depth (default `medium`), `{ANGLE}` = "overall", and `{OUTPUT_EXTRA}` = the child handoff format below. Spawn the `explorer` agent (`subagent_type: explorer`, defined in `agents/explorer.md`) with that rendered prompt before exploring locally. The agent has a read-only tool surface and returns the child handoff below. If delegation is unavailable, report that the exploration cannot follow this skill and stop.
-3. **Child — investigate:** The `explorer` agent locates the anchor and applicable repository instructions, resolves ambiguous or duplicate anchors, then follows definitions, callers, callees, tests, and configuration only where they affect the question. It checks competing implementations when ownership is unclear.
-4. **Child — report:** Return the child handoff defined below.
-5. **Parent — verify and integrate:** Incorporate the child's evidence, perform any necessary local follow-up, and ensure every material claim meets the same evidence standard.
-6. **Parent — stop:** Finish when the original question is answered, the controlling owner, path, or boundary is evidenced, and every remaining unknown explains why the available evidence was insufficient.
+For another named file, use `python <this-skill>/scripts/summary_cache.py check --repo <repository-root> --source <repo-relative-path>`. The command prints `fresh`, `missing`, `stale`, `missing-source`, or `skipped`, followed by the summary path. A fresh summary is a starting point, not proof that it answers every question. Read the source when the question needs details the summary lacks or when current behavior matters. Treat a stale summary as context only until source investigation refreshes it.
 
-## Depth
+After exploring an eligible file in a writable session, the coordinating agent writes a concise Markdown body, then calls `python <this-skill>/scripts/summary_cache.py write --repo <repository-root> --source <repo-relative-path> --body-file <draft-path>`. The helper adds the source path and SHA-256 hash and writes `summaries/<repo-relative-path>.md`, preserving the source suffix. It rejects documentation. Do not write a summary for a missing source. Do not create summaries during read-only or planning work; report the findings in chat instead. A fresh, sufficient summary needs no rewrite.
 
-- **Quick:** identify the anchor, owning definition, and direct relationships.
-- **Medium:** establish the controlling path, meaningful branches, and tests or configuration that constrain it.
-- **Thorough:** examine alternate implementations, subsystem boundaries, failure paths, and unresolved searches.
+Every summary creation or edit must include a hash freshly computed from the current source with CRLF normalized to LF. Use the helper for all writes, including wording-only summary edits; it updates the source path and hash atomically. The checker also accepts older hashes written from CRLF checkouts, while new writes use the normalized form. When the source has not changed, its correct hash remains the same. Never copy an old hash into a revised summary or update a hash without checking that the summary body still describes the source.
 
-Escalate depth only when the current level cannot answer the question.
+The body covers the file's purpose and behavior, key definitions and dependencies, relevant `path:line` evidence, and unresolved questions. Include the callable surface, inputs, outputs, and side effects when those details matter to the question. A summary is concise reusable context, not a replacement for current source evidence.
 
-## Output
+## Investigation
 
-### Child handoff to parent
+1. State the question, anchor, and depth. Use medium depth unless the caller requests quick or thorough investigation.
+2. Delegate a bounded, read-only question to the `explorer` agent (Agent tool, `subagent_type: explorer`). It follows definitions, callers, tests, and configuration only where they affect the answer. If delegation is unavailable, investigate directly.
+3. Verify the returned evidence. Label inferences and search gaps, and cite a precise `path:line` for every material claim.
+4. For an eligible non-documentation file, create or refresh its summary when investigation changed what is known and writing is allowed.
+5. Answer when the controlling path or owner is evidenced and remaining unknowns have been stated.
 
-The child returns:
+The explorer agent remains read-only. The coordinating agent owns summary writes.
 
-1. **Findings** — observed behavior with a precise `path:line` reference for every material claim.
-2. **Inferences** — conclusions not directly established by the cited code, labeled as inference.
-3. **Search gaps** — unresolved questions, what was searched, and why the evidence was insufficient.
-4. **Files read** — every file the child read.
+## Depth and response
 
-### Parent response to caller
+- **Quick:** anchor, owning definition, and direct relationships.
+- **Medium:** controlling path, meaningful branches, and constraining tests or configuration.
+- **Thorough:** alternate implementations, subsystem boundaries, failure paths, and unresolved searches.
 
-The parent integrates and verifies the child handoff, then returns the caller's requested format. When the caller provides no format, return:
-
-1. **Direct answer** — the smallest useful conclusion.
-2. **Evidence map** — key `path:line` references and the role of each location.
-3. **Flow or relationships** — only the sequence, ownership, or dependencies needed to answer the question.
-4. **Uncertainty or search gaps** — distinguish missing evidence from inference.
-5. **Next inspection target** — include only when something material remains unresolved.
+Return a direct answer, the smallest useful evidence map, relevant flow, and uncertainty. Include a next inspection target only when something material remains unresolved.
