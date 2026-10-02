@@ -23,6 +23,8 @@ description: Create new agent skills with proper structure, progressive disclosu
    - Anything missing or unclear?
    - Should any section be more/less detailed?
 
+Before delivery, run the skill against one representative request and check that each step reaches its stated completion criterion. Keep a single source of truth for each rule; remove instructions that would not change the agent's behavior.
+
 ## Skill Structure
 
 ```
@@ -87,6 +89,8 @@ Helps with documents.
 
 The bad example gives your agent no way to distinguish this from other document skills.
 
+Treat the description as the invocation contract. Give each distinct use case one trigger, and avoid synonym lists that repeat the same case. Create a separate skill only when it has a distinct trigger or a workflow whose later steps distract from completing earlier ones. Keep steps needed on every run in `SKILL.md`; link optional reference material at the step that needs it. Put each concept's definition, rules, and exceptions together so a reader finds them in one place.
+
 ## When to Add Scripts
 
 Add utility scripts when:
@@ -115,3 +119,5 @@ After drafting, verify:
 - [ ] Consistent terminology
 - [ ] Concrete examples included
 - [ ] References one level deep
+- [ ] Each step has a checkable completion criterion
+- [ ] No duplicate or no-op rules remain

@@ -1,16 +1,22 @@
 ---
 name: handoff
-description: Compact the current conversation into a handoff document for another agent to pick up.
-argument-hint: "What will the next session be used for?"
+description: Create a redacted, portable handoff document for continuing work in a later Claude Code session. Use when pausing, transferring ownership, or preserving a resume point.
 disable-model-invocation: true
 ---
 
-Write a handoff document summarising the current conversation so a fresh agent can continue the work. Save to the temporary directory of the user's OS - not the current workspace.
+# Handoff
 
-Include a "suggested skills" section in the document, naming which skills the next agent should call the Skill tool for.
+Write a portable Markdown handoff. Ask for an output path when the user supplied one; otherwise write `.claude/handoffs/<UTC timestamp>-<slug>.md`. Never auto-commit it.
 
-Do not duplicate content already captured in other artifacts (specs, plans, ADRs, issues, commits, diffs). Reference them by path or URL instead.
+Redact secrets, credentials, personal data, and private tool output. Reference existing plans, decisions, diffs, commits, issues, and verification output instead of copying them.
 
-Redact any sensitive information, such as API keys, passwords, or personally identifiable information.
+Use these sections:
 
-If the user passed arguments, treat them as a description of what the next session will focus on and tailor the doc accordingly.
+1. Goal and current status.
+2. Worktree and branch, including whether it is dirty.
+3. Decisions made and their evidence.
+4. Files changed and verification completed.
+5. Open risks, blockers, and the next smallest action.
+6. Suggested skills and named subagents.
+
+Confirm the final path. A later session uses this document as input; it must not require private session logs.

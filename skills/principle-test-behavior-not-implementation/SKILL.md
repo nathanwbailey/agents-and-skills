@@ -1,25 +1,30 @@
 ---
 name: principle-test-behavior-not-implementation
-description: "Apply when you write, change, or keep a test. Call the code the way its users do and assert the result they observe against a literal expected value. If the test would still pass when every imported function returns undefined, rewrite the assertion or delete the test."
+description: "Apply when writing, changing, or reviewing Python tests. Exercise the entry point a caller uses and assert a concrete result or observable effect. Rewrite tests that only inspect mocks, repeat implementation constants, or assert their own fixtures."
 disable-model-invocation: true
 ---
 
 # Test Behavior, Not Implementation
 
-A test calls the code the way its users do and asserts the result they observe against a literal expected value. A test that asserts which calls the code made, or restates a constant the code contains, does neither.
+A Python test should call the entry point its caller uses and check a result or effect the caller can observe. Use a concrete input and an independently written expected value.
 
-The check: before you keep a test, ask whether it would still pass if every function it imports returned `undefined`. If yes, it observes no behavior and cannot fail for a defect. Rewrite the assertion or delete the test.
+Before keeping a test, ask: if the subject returned `None` and made no observable change, would this test still pass? If so, it probably does not check the behavior it claims to check. This is a diagnostic, not a rule that every valid function must return a value: a function may legitimately return `None` while writing a file, changing state, or raising a documented exception.
 
-**Why:** A test that cannot fail for a defect costs CI time and review attention and catches nothing. A constant pin also fails when someone edits the constant or the prompt it restates, so it prevents that edit.
+Common weak tests:
 
-**Five shapes that still pass when every imported function returns `undefined`:**
+- **No useful assertion:** the test only executes code, or checks `result is not None`, `isinstance(result, dict)`, or `len(result) > 0` when the actual values matter.
+- **Mock interaction only:** `mock.assert_called_once()` checks wiring but not the returned data, written payload, or other caller-visible effect.
+- **Self-referential expectation:** `assert parse(value) == parse(value)`, or the expected value is calculated by the same function under test.
+- **Constant or prompt pin:** `assert LIMITS.max_tools == 8` or `assert "You are" in PROMPT` merely repeats an implementation choice instead of checking the behavior that uses it.
+- **Fixture asserts fixture:** the assertion checks data constructed by the test or a fixture, without exercising the subject.
 
-- **Weak or no assertion.** No `expect`, or only `toBeDefined`, `toBeTruthy`, `not.toThrow`, `toBeInstanceOf`, `toBeGreaterThan(0)`.
-- **Mock or absence only.** Only `toHaveBeenCalled`, `not.toHaveBeenCalled`, `toBeUndefined`, `toEqual([])`, `toHaveLength(0)`, `not.toBe(wrongValue)`.
-- **Self-referential.** The expected value comes from the code under test: `expect(f(a)).toBe(f(a))`, `expect(parsed.url).toBe(buildUrl(...))`.
-- **Constant pin.** The assertion restates a hand-maintained constant, config default, table row, or prompt string: `expect(LIMITS.maxTools).toBe(8)`, `expect(PROMPT).toContain("You are")`.
-- **Fixture asserts fixture.** The assertion reads data the test built or a value computed in `beforeEach`, and the subject never runs inside the body.
+Prefer a test such as:
 
-**The fix:** call the subject inside the test body with one concrete input and assert the literal output or the observable effect, `expect(slugify("Hello, World!")).toBe("hello-world")`. For an absence, assert the presence on the other input in the same test. For a constant, test the mechanism that reads it with one input instead of restating the value. For a mock, assert the payload it received or the state after the call, not that it was called. When no such assertion exists, delete the test.
+```python
+def test_slugify():
+    assert slugify("Hello, World!") == "hello-world"
+```
 
-**Keep** a test of a relation across a table's rows (a key present in two tables, a parent that exists), and a compile-time check in a `*.test-d.ts` file.
+For a function whose result is an effect, call it and inspect that effect. For example, write to `tmp_path` and assert the file's exact contents. When a mock represents a boundary the subject does not own, assert the meaningful payload sent across it and, where applicable, the subject's result. Test an absent result alongside a concrete present case when absence alone could pass without working behavior.
+
+Keep tests of real invariants, such as a foreign key matching an existing row, and tests that intentionally check a public typing contract with a Python type checker. Avoid deleting a valid test merely because its observable result is `None`.

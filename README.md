@@ -1,22 +1,26 @@
 # agents-and-skills
 
-Personal collection of Claude Code skills and subagents.
+Claude Code skills and subagents for reusable local workflows.
 
-- `skills/` — one directory per skill, each with a `SKILL.md`
-- `agents/` — Claude Code subagent definitions. Every agent pins `model: claude-sonnet-5` and `effort: medium`
-- `tests/` — `python3 -m unittest discover tests` checks that every agent a skill spawns exists in `agents/`, that every agent pins the model and effort, that no file names another editor, a remote agent, or a non-Claude model, and that `install.sh` installs into `~/.claude`
-- `install.sh` — copies `skills/` to `~/.claude/skills` and `agents/` to `~/.claude/agents`
+- `skills/` holds 25 skills selected for AI/ML product engineering and supporting software workflows. Twelve are explicit-only (`disable-model-invocation: true`); invoke them as `/skill-name`, for example `/handoff`.
+- `agents/` holds three subagents: `explorer` (read-only exploration), `reviewer` (read-only review of a pinned Git snapshot), and `general-purpose` (scoped worker).
+- `install.py` copies both into `~/.claude/skills` and `~/.claude/agents`.
+
+`explore` checks `summaries/<repo-relative-source-path>.md` before searching a named source file, and the coordinating agent refreshes that summary after investigating. A source hash marks stale summaries.
 
 ## Install
 
 ```sh
-./install.sh
+python3 install.py
 ```
 
-Flags:
+- `--list` lists source items without copying.
+- `--dry-run` shows the planned copies.
+- `--force` replaces existing items; otherwise they are skipped.
 
-- `--force` — overwrite anything already installed (default: skip existing items)
-- `--dry-run` — print what would happen without writing anything
-- `--list` — list the skills and agents in this repo and exit
+## Validate
 
-Skills must not pass `model` when they spawn a repo agent. A spawn-time `model` overrides the agent's pin.
+```sh
+python3 -m unittest discover -s tests -v
+python3 tests/validate_repo.py
+```
